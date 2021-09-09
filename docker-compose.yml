@@ -1,0 +1,89 @@
+version: '2'
+services:
+  web:
+    image: muraliojha/magento2.4_nginx:7.4 
+    container_name: web
+    ports:
+      - "80:80"
+    tty: true
+    restart: always
+    networks:
+        - main
+    volumes:
+      - ./web/htdocs:/var/www/html
+      - ./nginx:/var/log/nginx
+    links:
+      - mysql
+    env_file:
+      - .env
+#    environment:
+ #     DB_HOST: ${DB_HOST}
+  #    DB_DATABASE: ${DB_DATABASE}
+   #   DB_USERNAME: ${DB_USERNAME}
+    #  DB_PASSWORD: ${DB_PASSWORD}
+  mysql: 
+    image: muraliojha/mysql:8
+    container_name: mysql
+    restart: always
+    networks:
+        - main
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  phpmyadmin: 
+        image: muraliojha/phpmyadmin:latest
+        container_name: phpmyadmin
+        environment:
+            PMA_ARBITRARY: ${PMA_ARBITRARY}
+            PMA_HOST: ${PMA_HOST}
+            PMA_PORT: ${PMA_PORT}
+            PMA_USER: ${PMA_USER}
+            PMA_PASSWORD: ${PMA_PASSWORD}
+        restart: always
+        ports:
+            - "8080:80"
+        links:
+            - mysql
+        volumes:
+            - /sessions
+        networks:
+            - main
+  elasticsearch:
+        image: muraliojha/elasticsearch:7
+        container_name: elasticsearch
+        environment:
+            discovery.type: single-node
+        restart: always
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        networks:
+            - main
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+        - main
+    volumes:
+      - ./redis:/var/lib/redis
+    ports:
+      - "6379:6379"
+  jenkins:
+    image: jenkins:2.60.3
+    restart: always
+    networks:
+        - main
+    ports:
+      - "8081:8080"
+
+networks:
+    main:
+        driver: bridge
